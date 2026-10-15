@@ -15,6 +15,7 @@ use Ttpryg\SubscriptionEngine\Contracts\SubscriptionRepositoryInterface;
 use Ttpryg\SubscriptionEngine\Entities\Plan;
 use Ttpryg\SubscriptionEngine\Entities\Subscription;
 use Ttpryg\SubscriptionEngine\Entities\SubscriptionInvoice;
+use Ttpryg\SubscriptionEngine\Enums\InvoiceStatus;
 use Ttpryg\SubscriptionEngine\Enums\SubscriptionStatus;
 use Ttpryg\SubscriptionEngine\Events\SubscriptionCanceledEvent;
 use Ttpryg\SubscriptionEngine\Events\SubscriptionCreatedEvent;
@@ -49,9 +50,13 @@ class SubscriptionService
 
     private readonly Closure $idGenerator;
 
+    /** @var (Closure(Closure(): mixed): mixed)|null */
+    private readonly ?Closure $transactionManager;
+
     /**
      * @param  int  $graceDays  Days after an invoice is issued before the subscription becomes PAST_DUE.
      * @param  (callable(): string)|null  $idGenerator  Generates invoice IDs (defaults to UUID v4).
+     * @param  (callable(callable(): mixed): mixed)|null  $transactionManager  Wraps execution in a DB transaction.
      */
     public function __construct(
         private readonly PlanRepositoryInterface $planRepository,
@@ -60,10 +65,12 @@ class SubscriptionService
         ?ClockInterface $clock = null,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
         private readonly int $graceDays = 3,
-        ?callable $idGenerator = null
+        ?callable $idGenerator = null,
+        ?callable $transactionManager = null
     ) {
         $this->clock = $clock ?? new SystemClock;
-        $this->idGenerator = $idGenerator !== null ? Closure::fromCallable($idGenerator) : self::uuid4(...);
+        $this->idGenerator = $idGenerator !== null ? Closure::fromCallable($idGenerator) : $this->uuid4(...);
+        $this->transactionManager = $transactionManager !== null ? Closure::fromCallable($transactionManager) : null;
     }
 
     public function subscribe(
@@ -141,6 +148,7 @@ class SubscriptionService
     public function recordPayment(string $invoiceId, ?string $paymentReference = null): SubscriptionInvoice
     {
         $invoice = $this->requireInvoice($invoiceId);
+        $wasAlreadyPaid = ($invoice->status === InvoiceStatus::PAID);
         $now = $this->clock->now();
 
         $invoice->markPaid($now, $paymentReference);
@@ -153,7 +161,9 @@ class SubscriptionService
             $this->subscriptionRepository->save($subscription);
         }
 
-        $this->eventDispatcher?->dispatch(new SubscriptionPaymentSucceededEvent($subscription, $invoice));
+        if (! $wasAlreadyPaid) {
+            $this->eventDispatcher?->dispatch(new SubscriptionPaymentSucceededEvent($subscription, $invoice));
+        }
 
         return $invoice;
     }
@@ -170,8 +180,12 @@ class SubscriptionService
         return $invoice;
     }
 
-    /** Schedules a plan change that takes effect at the next renewal (no proration). */
-    public function changePlan(string $subscriptionId, string $newPlanId): Subscription
+    /**
+     * Changes the subscription plan.
+     *
+     * @param  bool  $immediate  If false, takes effect at next renewal. If true, takes effect immediately with prorated invoice.
+     */
+    public function changePlan(string $subscriptionId, string $newPlanId, bool $immediate = false): Subscription
     {
         $plan = $this->requirePlan($newPlanId);
 
@@ -181,9 +195,52 @@ class SubscriptionService
 
         $subscription = $this->getSubscription($subscriptionId);
         $fromPlanId = $subscription->planId;
+        $now = $this->clock->now();
 
-        $subscription->schedulePlanChange($plan->id, $this->clock->now());
+        if (! $immediate) {
+            $subscription->schedulePlanChange($plan->id, $now);
+            $this->subscriptionRepository->save($subscription);
+            $this->eventDispatcher?->dispatch(new SubscriptionPlanChangedEvent($subscription, $fromPlanId, $plan->id));
+
+            return $subscription;
+        }
+
+        $oldPlan = $this->requirePlan($fromPlanId);
+        $subscription->applyPlan($plan->id, $now);
         $this->subscriptionRepository->save($subscription);
+
+        // Proration calculation: charge difference for remaining cycle if currently active
+        if ($subscription->status === SubscriptionStatus::ACTIVE) {
+            $currentStart = $subscription->currentPeriodStart->getTimestamp();
+            $currentEnd = $subscription->currentPeriodEnd->getTimestamp();
+            $nowTs = $now->getTimestamp();
+
+            $totalSeconds = max(1, $currentEnd - $currentStart);
+            $remainingSeconds = max(0, min($currentEnd - $nowTs, $totalSeconds));
+            $remainingRatio = $remainingSeconds / $totalSeconds;
+
+            $unusedCredit = $oldPlan->price * $remainingRatio;
+            $newPlanCost = $plan->price * $remainingRatio;
+            $proratedAmount = round(max(0.0, $newPlanCost - $unusedCredit), 2);
+
+            if ($proratedAmount > 0) {
+                $invoice = new SubscriptionInvoice(
+                    id: ($this->idGenerator)(),
+                    subscriptionId: $subscription->id,
+                    userId: $subscription->userId,
+                    planId: $plan->id,
+                    amount: $proratedAmount,
+                    currency: $plan->currency,
+                    periodStart: $now,
+                    periodEnd: $subscription->currentPeriodEnd,
+                    dueAt: $now->modify(sprintf('+%d days', $this->graceDays)),
+                    createdAt: $now
+                );
+                $this->invoiceRepository->save($invoice);
+                $this->eventDispatcher?->dispatch(new SubscriptionRenewalDueEvent($subscription, $invoice));
+            }
+        }
+
         $this->eventDispatcher?->dispatch(new SubscriptionPlanChangedEvent($subscription, $fromPlanId, $plan->id));
 
         return $subscription;
@@ -239,6 +296,17 @@ class SubscriptionService
      * @return array{past_due: int, renewed: int, expired: int}
      */
     public function processRenewals(): array
+    {
+        if ($this->transactionManager instanceof \Closure) {
+            /** @var array{past_due: int, renewed: int, expired: int} */
+            return ($this->transactionManager)(fn (): array => $this->doProcessRenewals());
+        }
+
+        return $this->doProcessRenewals();
+    }
+
+    /** @return array{past_due: int, renewed: int, expired: int} */
+    private function doProcessRenewals(): array
     {
         $now = $this->clock->now();
         $summary = ['past_due' => 0, 'renewed' => 0, 'expired' => 0];
@@ -343,7 +411,7 @@ class SubscriptionService
         return $this->invoiceRepository->findById($id) ?? throw InvoiceNotFoundException::withId($id);
     }
 
-    private static function uuid4(): string
+    private function uuid4(): string
     {
         $bytes = random_bytes(16);
         $bytes[6] = chr((ord($bytes[6]) & 0x0F) | 0x40);

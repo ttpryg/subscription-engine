@@ -35,6 +35,7 @@ class PdoInvoiceRepository implements InvoiceRepositoryInterface
             'due_at' => self::toDb($invoice->dueAt),
             'paid_at' => self::toDb($invoice->paidAt),
             'payment_reference' => $invoice->paymentReference,
+            'attempt_count' => $invoice->attemptCount,
             'created_at' => self::toDb($invoice->createdAt),
         ]);
     }
@@ -90,6 +91,7 @@ class PdoInvoiceRepository implements InvoiceRepositoryInterface
             status: InvoiceStatus::from((string) $row['status']),
             paidAt: self::fromDb($row['paid_at'] ?? null),
             paymentReference: $row['payment_reference'] ?? null,
+            attemptCount: (int) ($row['attempt_count'] ?? 0),
             createdAt: self::fromDb($row['created_at'])
         );
     }

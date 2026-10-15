@@ -162,6 +162,17 @@ class Subscription
         $this->touch($now);
     }
 
+    public function applyPlan(string $planId, DateTimeImmutable $now): void
+    {
+        if ($this->status->isTerminal()) {
+            throw InvalidSubscriptionStateException::cannot('change plan of', $this->status);
+        }
+
+        $this->planId = $planId;
+        $this->pendingPlanId = null;
+        $this->touch($now);
+    }
+
     private function assertStatus(string $action, SubscriptionStatus ...$allowed): void
     {
         if (! in_array($this->status, $allowed, true)) {

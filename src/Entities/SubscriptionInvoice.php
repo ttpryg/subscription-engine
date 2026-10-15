@@ -25,6 +25,7 @@ class SubscriptionInvoice
         public InvoiceStatus $status = InvoiceStatus::PENDING,
         public ?DateTimeImmutable $paidAt = null,
         public ?string $paymentReference = null,
+        public int $attemptCount = 0,
         ?DateTimeImmutable $createdAt = null
     ) {
         $this->createdAt = $createdAt ?? new DateTimeImmutable;
@@ -48,7 +49,15 @@ class SubscriptionInvoice
 
     public function markPaid(DateTimeImmutable $paidAt, ?string $paymentReference = null): void
     {
-        if ($this->status === InvoiceStatus::PAID || $this->status === InvoiceStatus::VOID) {
+        if ($this->status === InvoiceStatus::PAID) {
+            if ($paymentReference !== null && $this->paymentReference === null) {
+                $this->paymentReference = $paymentReference;
+            }
+
+            return;
+        }
+
+        if ($this->status === InvoiceStatus::VOID) {
             throw new DomainException(sprintf('Invoice "%s" is already %s', $this->id, $this->status->value));
         }
 
@@ -65,6 +74,7 @@ class SubscriptionInvoice
         }
 
         $this->status = InvoiceStatus::FAILED;
+        $this->attemptCount++;
     }
 
     public function void(): void

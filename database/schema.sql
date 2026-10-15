@@ -45,6 +45,13 @@ CREATE TABLE IF NOT EXISTS subscription_invoices (
     due_at DATETIME NOT NULL,
     paid_at DATETIME NULL,
     payment_reference VARCHAR(100) NULL,
+    attempt_count INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL,
     FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_subs_user_store ON subscriptions(user_id, store_id);
+CREATE INDEX IF NOT EXISTS idx_subs_renewal ON subscriptions(status, current_period_end);
+CREATE INDEX IF NOT EXISTS idx_inv_subscription ON subscription_invoices(subscription_id);
+CREATE INDEX IF NOT EXISTS idx_inv_overdue ON subscription_invoices(status, due_at);
+CREATE INDEX IF NOT EXISTS idx_plans_active ON subscription_plans(is_active, store_id);
