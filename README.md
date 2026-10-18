@@ -70,6 +70,29 @@ The schema defines three main tables:
 2. `subscriptions`: User subscriptions, period timestamps, statuses, and pending plan changes.
 3. `subscription_invoices`: Issued invoices, amounts, due dates, payment references, and retry counters.
 
+### Versioned Migrations
+
+Instead of importing the SQL manually, you can apply the schema (and any future
+incremental migrations) programmatically:
+
+```php
+use Ttpryg\SubscriptionEngine\Database\DatabaseMigrator;
+
+$pdo = new PDO('mysql:host=localhost;dbname=app', 'root', 'secret');
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+(new DatabaseMigrator($pdo))->migrate();
+```
+
+`DatabaseMigrator`:
+
+- **Fresh install** — runs `database/schema.sql` (the current source of truth)
+  and baselines every migration so it is not re-applied.
+- **Existing database** — runs only the incremental migrations in
+  `database/migrations/` that are not yet recorded, leaving existing data
+  untouched. Applied migrations are tracked in the `subscription_engine_migrations`
+  table, so `migrate()` is safe to run repeatedly.
+
 ---
 
 ## Quick Start Guide
