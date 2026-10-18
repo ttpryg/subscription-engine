@@ -1,0 +1,49 @@
+# Changelog
+
+All notable changes to `ttpryg/subscription-engine` will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.0] - 2026-10-18
+
+### Added
+
+- Root `ExceptionInterface` marker interface (`Ttpryg\SubscriptionEngine\Exceptions\ExceptionInterface`)
+  that extends `Throwable` and is implemented by every custom exception, so consumers can
+  catch all library-specific errors with a single type.
+- Versioned migration system: `DatabaseMigrator` and `MigrationRunner` (tracker table
+  `subscription_engine_migrations`), the baseline migration
+  `database/migrations/001_add_subscription_indexes.sql`, and
+  `tests/Integration/DatabaseMigratorTest.php`.
+- `.editorconfig` for consistent editor settings across the project.
+
+### Changed
+
+- Added `declare(strict_types=1)` to all source files that were missing it.
+
+### Documentation
+
+- README: documented programmatic schema application via `DatabaseMigrator::migrate()`.
+
+## [1.0.0] - 2026-10-16
+
+### Added
+
+- Initial release: `PlanService` and `SubscriptionService` covering the full subscription
+  lifecycle (create, activate, pause/resume, cancel, change plan, renewal, past-due,
+  payment success/failure, and expiry).
+- Entities `Plan`, `Subscription`, and `SubscriptionInvoice`; enums `BillingInterval`,
+  `SubscriptionStatus`, and `InvoiceStatus`; and the `BillingPeriod` value object.
+- Pluggable repositories (in-memory and PDO) for plans, subscriptions, and invoices.
+- Pluggable clock (`ClockInterface` with `SystemClock` and `FixedClock`) for deterministic
+  time-based tests.
+- Domain events: `PlanCreatedEvent`, `SubscriptionCreatedEvent`, `SubscriptionRenewedEvent`,
+  `SubscriptionRenewalDueEvent`, `SubscriptionPlanChangedEvent`, `SubscriptionPausedEvent`,
+  `SubscriptionResumedEvent`, `SubscriptionCanceledEvent`, `SubscriptionExpiredEvent`,
+  `SubscriptionPastDueEvent`, `SubscriptionPaymentSucceededEvent`, and
+  `SubscriptionPaymentFailedEvent`.
+- Unit and integration tests.
+
+[Unreleased]: https://github.com/ttpryg/subscription-engine/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/ttpryg/subscription-engine/releases/tag/1.0.0
