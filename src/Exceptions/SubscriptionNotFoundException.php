@@ -6,7 +6,7 @@ namespace Ttpryg\SubscriptionEngine\Exceptions;
 
 use RuntimeException;
 
-class SubscriptionNotFoundException extends RuntimeException
+class SubscriptionNotFoundException extends RuntimeException implements ExceptionInterface
 {
     public static function withId(string $id): self
     {

@@ -7,7 +7,7 @@ namespace Ttpryg\SubscriptionEngine\Exceptions;
 use DomainException;
 use Ttpryg\SubscriptionEngine\Enums\SubscriptionStatus;
 
-class InvalidSubscriptionStateException extends DomainException
+class InvalidSubscriptionStateException extends DomainException implements ExceptionInterface
 {
     public static function cannot(string $action, SubscriptionStatus $status): self
     {
