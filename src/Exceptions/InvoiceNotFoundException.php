@@ -6,7 +6,7 @@ namespace Ttpryg\SubscriptionEngine\Exceptions;
 
 use RuntimeException;
 
-class InvoiceNotFoundException extends RuntimeException
+class InvoiceNotFoundException extends RuntimeException implements ExceptionInterface
 {
     public static function withId(string $id): self
     {
