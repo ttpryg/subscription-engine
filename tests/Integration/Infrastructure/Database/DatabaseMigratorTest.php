@@ -191,6 +191,9 @@ class DatabaseMigratorTest extends TestCase
 
     private function countRows(string $table): int
     {
-        return (int) $this->pdo->query("SELECT COUNT(*) FROM {$table}")->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM {$table}");
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
     }
 }

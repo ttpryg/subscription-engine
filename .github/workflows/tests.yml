@@ -29,6 +29,9 @@ jobs:
       - name: Run Lint
         run: composer fix:check
 
+      - name: Run static analysis
+        run: composer analyse
+
       - name: Run test suite
         run: composer test
 
