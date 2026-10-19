@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the most recently applied migrations through `Migration::down()`.
 - MySQL/MariaDB integration coverage: the PDO repository tests run against a MariaDB
   service when `SUBSCRIPTION_ENGINE_DB_DSN` is set, and CI runs a dedicated MariaDB job.
+- Static analysis tooling: `phpstan.neon` (level 8 covering `src`, `infrastructure`,
+  `database/migrations`, and `tests`), `phpstan/phpstan` as an explicit dev dependency,
+  a `composer analyse` script, and a CI step running it alongside the lint check.
+- Docker development tooling: `docker-compose.yml` and `.docker/php/Dockerfile` now
+  provide a single PHP 8.1 CLI container for running `composer test`, `composer analyse`,
+  and `composer fix` without a local PHP install. Documented in the README.
 
 ### Changed
 
@@ -64,6 +70,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Ttpryg\SubscriptionEngine\Contracts\ClockInterface` was removed; `SystemClock`,
   `FixedClock`, and `SubscriptionService` now use the PSR-20 contract. **Breaking**
   for consumers implementing the old interface.
+
+### Removed
+
+- Nginx application scaffolding (`.docker/nginx/default.conf`) that served an
+  `index.php` which does not exist in this repository. The previous dual-service
+  `docker-compose.yml` (PHP-FPM + nginx) was replaced by a PHP CLI-only dev container.
 
 ## [1.1.0] - 2026-10-18
 
