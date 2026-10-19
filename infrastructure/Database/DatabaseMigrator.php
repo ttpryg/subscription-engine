@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Database;
+namespace Ttpryg\SubscriptionEngine\Infrastructure\Database;
 
 use PDO;
 use RuntimeException;

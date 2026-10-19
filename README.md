@@ -76,7 +76,7 @@ Instead of importing the SQL manually, you can apply the schema (and any future
 incremental migrations) programmatically:
 
 ```php
-use Ttpryg\SubscriptionEngine\Database\DatabaseMigrator;
+use Ttpryg\SubscriptionEngine\Infrastructure\Database\DatabaseMigrator;
 
 $pdo = new PDO('mysql:host=localhost;dbname=app', 'root', 'secret');
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -103,9 +103,9 @@ $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 use PDO;
 use Ttpryg\EventDispatcher\Dispatcher;
 use Ttpryg\SubscriptionEngine\Clock\SystemClock;
-use Ttpryg\SubscriptionEngine\Repositories\PdoInvoiceRepository;
-use Ttpryg\SubscriptionEngine\Repositories\PdoPlanRepository;
-use Ttpryg\SubscriptionEngine\Repositories\PdoSubscriptionRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoInvoiceRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoPlanRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoSubscriptionRepository;
 use Ttpryg\SubscriptionEngine\Application\Service\PlanService;
 use Ttpryg\SubscriptionEngine\Application\Service\SubscriptionService;
 

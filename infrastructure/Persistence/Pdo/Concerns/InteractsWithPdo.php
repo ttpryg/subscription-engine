@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Repositories\Concerns;
+namespace Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\Concerns;
 
 use DateTimeImmutable;
 use PDO;

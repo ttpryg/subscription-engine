@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Repositories;
+namespace Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo;
 
 use PDO;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;
 use Ttpryg\SubscriptionEngine\Domain\Enum\BillingInterval;
 use Ttpryg\SubscriptionEngine\Domain\Repository\PlanRepositoryInterface;
-use Ttpryg\SubscriptionEngine\Repositories\Concerns\InteractsWithPdo;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\Concerns\InteractsWithPdo;
 
 class PdoPlanRepository implements PlanRepositoryInterface
 {

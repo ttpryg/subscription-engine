@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Ttpryg\SubscriptionEngine\Application\Service\PlanService;
 use Ttpryg\SubscriptionEngine\Domain\Enum\BillingInterval;
 use Ttpryg\SubscriptionEngine\Domain\Exception\PlanNotFoundException;
-use Ttpryg\SubscriptionEngine\Repositories\MemoryPlanRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\InMemory\MemoryPlanRepository;
 
 class PlanServiceTest extends TestCase
 {

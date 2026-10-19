@@ -10,12 +10,13 @@ Hasil review struktur terhadap `.agents/rules/module-architecture.md`, `.agents/
   - Dampak: `README.md` mengklaim Clean Architecture/DDD, tetapi pemisahan layer belum ada.
   - Selesai: dipindahkan ke `src/Domain/{Entity,ValueObject,Repository,Exception,Enum,Event}` dan `src/Application/Service`; namespace, import, test, README, dan CHANGELOG diperbarui.
 
-- [ ] Pindahkan implementasi infrastruktur database keluar dari module core.
+- [x] Pindahkan implementasi infrastruktur database keluar dari module core.
   - `src/Repositories/Pdo*.php`
   - `src/Repositories/Concerns/InteractsWithPdo.php`
   - `src/Database/DatabaseMigrator.php`
   - `src/Database/MigrationRunner.php`
-  - Port di `src/Contracts/` sudah bebas PDO; pertahankan dan letakkan adapter di layer infrastructure, bukan di `src/` core.
+  - Port di `src/Domain/Repository/` sudah bebas PDO; adapter dipindahkan ke `infrastructure/`.
+  - Selesai: PDO + in-memory repositories ke `infrastructure/Persistence/{Pdo,InMemory}`, migrator ke `infrastructure/Database`, namespace `Ttpryg\SubscriptionEngine\Infrastructure\*`, autoload Composer ditambahkan.
 
 - [ ] Ganti ketergantungan event dispatcher ke kontrak PSR-14.
   - `src/Services/SubscriptionService.php:9`

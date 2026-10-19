@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Repositories;
+namespace Ttpryg\SubscriptionEngine\Infrastructure\Persistence\InMemory;
 
 use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;
 use Ttpryg\SubscriptionEngine\Domain\Repository\PlanRepositoryInterface;
