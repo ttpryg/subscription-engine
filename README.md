@@ -375,13 +375,34 @@ Run tests and code quality tools:
 composer test
 
 # Run static analysis
-vendor/bin/phpstan analyse src tests --level=8
+composer analyse
 
 # Check code formatting & refactoring
 composer fix:check
 
 # Apply code formatting & refactoring
 composer fix
+```
+
+### Development with Docker
+
+If you don't want to install PHP locally, a PHP 8.1 CLI development container is
+provided (no web server — this is a library, not an application):
+
+```bash
+# Build & start the dev container
+docker compose up -d --build
+
+# Install dependencies inside the container
+docker compose exec app composer install
+
+# Run the quality tools
+docker compose exec app composer test
+docker compose exec app composer analyse
+docker compose exec app composer fix
+
+# Stop & remove the container
+docker compose down
 ```
 
 ---
