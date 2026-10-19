@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Ttpryg\SubscriptionEngine\Clock;
 
 use DateTimeImmutable;
-use Ttpryg\SubscriptionEngine\Contracts\ClockInterface;
+use Psr\Clock\ClockInterface;
 
 final class SystemClock implements ClockInterface
 {

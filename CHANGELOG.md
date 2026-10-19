@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of the concrete `Ttpryg\EventDispatcher\Contracts\EventDispatcherInterface`.
 - Removed the hard dependency on `ttpryg/event-dispatcher`; it is now listed as a
   suggested PSR-14 implementation. Consumers may use any PSR-14 dispatcher.
+- Clock support now uses PSR-20 `Psr\Clock\ClockInterface`. The module-specific
+  `Ttpryg\SubscriptionEngine\Contracts\ClockInterface` was removed; `SystemClock`,
+  `FixedClock`, and `SubscriptionService` now use the PSR-20 contract. **Breaking**
+  for consumers implementing the old interface.
 
 ## [1.1.0] - 2026-10-18
 
