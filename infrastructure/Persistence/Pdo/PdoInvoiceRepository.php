@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Repositories;
+namespace Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo;
 
 use DateTimeImmutable;
 use PDO;
 use Ttpryg\SubscriptionEngine\Domain\Entity\SubscriptionInvoice;
 use Ttpryg\SubscriptionEngine\Domain\Enum\InvoiceStatus;
 use Ttpryg\SubscriptionEngine\Domain\Repository\InvoiceRepositoryInterface;
-use Ttpryg\SubscriptionEngine\Repositories\Concerns\InteractsWithPdo;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\Concerns\InteractsWithPdo;
 
 class PdoInvoiceRepository implements InvoiceRepositoryInterface
 {

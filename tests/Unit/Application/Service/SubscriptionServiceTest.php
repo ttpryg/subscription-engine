@@ -16,9 +16,9 @@ use Ttpryg\SubscriptionEngine\Domain\Enum\InvoiceStatus;
 use Ttpryg\SubscriptionEngine\Domain\Enum\SubscriptionStatus;
 use Ttpryg\SubscriptionEngine\Domain\Event\SubscriptionCreatedEvent;
 use Ttpryg\SubscriptionEngine\Domain\Event\SubscriptionPaymentSucceededEvent;
-use Ttpryg\SubscriptionEngine\Repositories\MemoryInvoiceRepository;
-use Ttpryg\SubscriptionEngine\Repositories\MemoryPlanRepository;
-use Ttpryg\SubscriptionEngine\Repositories\MemorySubscriptionRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\InMemory\MemoryInvoiceRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\InMemory\MemoryPlanRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\InMemory\MemorySubscriptionRepository;
 
 class SubscriptionServiceTest extends TestCase
 {

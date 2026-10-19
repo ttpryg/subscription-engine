@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Tests\Integration;
+namespace Ttpryg\SubscriptionEngine\Tests\Integration\Infrastructure\Database;
 
 use PDO;
 use PHPUnit\Framework\TestCase;
-use Ttpryg\SubscriptionEngine\Database\DatabaseMigrator;
-use Ttpryg\SubscriptionEngine\Database\MigrationRunner;
+use Ttpryg\SubscriptionEngine\Infrastructure\Database\DatabaseMigrator;
+use Ttpryg\SubscriptionEngine\Infrastructure\Database\MigrationRunner;
 
 class DatabaseMigratorTest extends TestCase
 {

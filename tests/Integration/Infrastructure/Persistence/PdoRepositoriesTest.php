@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Tests\Integration\Repositories;
+namespace Ttpryg\SubscriptionEngine\Tests\Integration\Infrastructure\Persistence;
 
 use DateTimeImmutable;
 use PDO;
@@ -13,9 +13,9 @@ use Ttpryg\SubscriptionEngine\Domain\Entity\SubscriptionInvoice;
 use Ttpryg\SubscriptionEngine\Domain\Enum\BillingInterval;
 use Ttpryg\SubscriptionEngine\Domain\Enum\InvoiceStatus;
 use Ttpryg\SubscriptionEngine\Domain\Enum\SubscriptionStatus;
-use Ttpryg\SubscriptionEngine\Repositories\PdoInvoiceRepository;
-use Ttpryg\SubscriptionEngine\Repositories\PdoPlanRepository;
-use Ttpryg\SubscriptionEngine\Repositories\PdoSubscriptionRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoInvoiceRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoPlanRepository;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoSubscriptionRepository;
 
 class PdoRepositoriesTest extends TestCase
 {
@@ -33,7 +33,7 @@ class PdoRepositoriesTest extends TestCase
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Run schema
-        $schema = file_get_contents(__DIR__.'/../../../database/schema.sql');
+        $schema = file_get_contents(__DIR__.'/../../../../database/schema.sql');
         $this->assertIsString($schema);
         $this->pdo->exec($schema);
 

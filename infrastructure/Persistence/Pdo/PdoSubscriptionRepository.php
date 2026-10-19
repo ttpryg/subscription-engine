@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Repositories;
+namespace Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo;
 
 use DateTimeImmutable;
 use PDO;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Subscription;
 use Ttpryg\SubscriptionEngine\Domain\Enum\SubscriptionStatus;
 use Ttpryg\SubscriptionEngine\Domain\Repository\SubscriptionRepositoryInterface;
-use Ttpryg\SubscriptionEngine\Repositories\Concerns\InteractsWithPdo;
+use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\Concerns\InteractsWithPdo;
 
 class PdoSubscriptionRepository implements SubscriptionRepositoryInterface
 {

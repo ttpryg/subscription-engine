@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Repositories;
+namespace Ttpryg\SubscriptionEngine\Infrastructure\Persistence\InMemory;
 
 use DateTimeImmutable;
 use Ttpryg\SubscriptionEngine\Domain\Entity\SubscriptionInvoice;
