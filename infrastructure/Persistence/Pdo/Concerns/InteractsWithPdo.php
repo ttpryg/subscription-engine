@@ -7,7 +7,12 @@ namespace Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\Concerns;
 use DateTimeImmutable;
 use PDO;
 
-/** Shared helpers for PDO repositories (portable across MariaDB/MySQL/SQLite). */
+/**
+ * Shared helpers for PDO repositories.
+ *
+ * Upserts are atomic on the supported databases (MySQL/MariaDB and SQLite);
+ * other drivers fall back to a non-atomic select-then-insert/update.
+ */
 trait InteractsWithPdo
 {
     private static function toDb(?DateTimeImmutable $date): ?string
@@ -21,7 +26,7 @@ trait InteractsWithPdo
     }
 
     /**
-     * Atomic upsert across MySQL/MariaDB, SQLite, and PostgreSQL, with generic fallback.
+     * Atomic upsert on MySQL/MariaDB and SQLite, with a generic fallback.
      *
      * @param  array<string, mixed>  $data
      */
@@ -30,7 +35,7 @@ trait InteractsWithPdo
         $columns = array_keys($data);
         $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 
-        if ($driver === 'sqlite' || $driver === 'pgsql') {
+        if ($driver === 'sqlite') {
             $sets = implode(', ', array_map(
                 static fn (string $c): string => sprintf('%s = EXCLUDED.%s', $c, $c),
                 array_diff($columns, ['id'])

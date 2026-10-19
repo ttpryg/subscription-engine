@@ -16,6 +16,7 @@ use Ttpryg\SubscriptionEngine\Domain\Enum\SubscriptionStatus;
 use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoInvoiceRepository;
 use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoPlanRepository;
 use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoSubscriptionRepository;
+use Ttpryg\SubscriptionEngine\Tests\Support\DatabaseConnection;
 
 class PdoRepositoriesTest extends TestCase
 {
@@ -29,17 +30,28 @@ class PdoRepositoriesTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->pdo = new PDO('sqlite::memory:');
+        $this->pdo = DatabaseConnection::fromEnvironment();
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Run schema
-        $schema = file_get_contents(__DIR__.'/../../../../database/schema.sql');
-        $this->assertIsString($schema);
-        $this->pdo->exec($schema);
+        DatabaseConnection::dropEngineTables($this->pdo);
+        $this->runSchema();
 
         $this->planRepo = new PdoPlanRepository($this->pdo);
         $this->subRepo = new PdoSubscriptionRepository($this->pdo);
         $this->invRepo = new PdoInvoiceRepository($this->pdo);
+    }
+
+    private function runSchema(): void
+    {
+        $schema = file_get_contents(__DIR__.'/../../../../database/schema.sql');
+        $this->assertIsString($schema);
+
+        foreach (explode(';', $schema) as $statement) {
+            $statement = trim($statement);
+            if ($statement !== '') {
+                $this->pdo->exec($statement);
+            }
+        }
     }
 
     public function test_plan_repository_crud_and_atomic_upsert(): void

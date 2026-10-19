@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
     interval_count INT NOT NULL DEFAULT 1,
     trial_days INT NOT NULL DEFAULT 0,
     store_id VARCHAR(36) NULL,
-    is_active TINYINT(1) DEFAULT 1,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL
 );
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     current_period_start DATETIME NOT NULL,
     current_period_end DATETIME NOT NULL,
     trial_ends_at DATETIME NULL,
-    cancel_at_period_end TINYINT(1) DEFAULT 0,
+    cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
     canceled_at DATETIME NULL,
     paused_at DATETIME NULL,
     ended_at DATETIME NULL,
@@ -50,8 +50,8 @@ CREATE TABLE IF NOT EXISTS subscription_invoices (
     FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_subs_user_store ON subscriptions(user_id, store_id);
-CREATE INDEX IF NOT EXISTS idx_subs_renewal ON subscriptions(status, current_period_end);
-CREATE INDEX IF NOT EXISTS idx_inv_subscription ON subscription_invoices(subscription_id);
-CREATE INDEX IF NOT EXISTS idx_inv_overdue ON subscription_invoices(status, due_at);
-CREATE INDEX IF NOT EXISTS idx_plans_active ON subscription_plans(is_active, store_id);
+CREATE INDEX idx_subs_user_store ON subscriptions(user_id, store_id);
+CREATE INDEX idx_subs_renewal ON subscriptions(status, current_period_end);
+CREATE INDEX idx_inv_subscription ON subscription_invoices(subscription_id);
+CREATE INDEX idx_inv_overdue ON subscription_invoices(status, due_at);
+CREATE INDEX idx_plans_active ON subscription_plans(is_active, store_id);
