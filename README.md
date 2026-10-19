@@ -155,10 +155,11 @@ $subscriptionService = new SubscriptionService(
 ### 2. Managing Plans
 
 ```php
+use Ttpryg\SubscriptionEngine\Application\DTO\CreatePlanRequest;
 use Ttpryg\SubscriptionEngine\Domain\Enum\BillingInterval;
 
 // Create a Monthly Pro Plan with 7 days trial
-$plan = $planService->createPlan(
+$plan = $planService->createPlan(new CreatePlanRequest(
     id: 'plan_pro_monthly',
     name: 'Pro Monthly',
     price: 150000.0, // 150,000 IDR
@@ -167,7 +168,7 @@ $plan = $planService->createPlan(
     currency: 'IDR',
     trialDays: 7,
     description: 'Full access to all Pro features'
-);
+));
 
 // Update price or deactivate plan
 $planService->changePrice('plan_pro_monthly', 175000.0);
@@ -180,20 +181,22 @@ $planService->deactivatePlan('plan_pro_monthly');
 
 #### Starting a Subscription
 ```php
+use Ttpryg\SubscriptionEngine\Application\DTO\SubscribeRequest;
+
 // User starts on a 7-day trial (status: TRIALING)
-$sub = $subscriptionService->subscribe(
+$sub = $subscriptionService->subscribe(new SubscribeRequest(
     id: 'sub_' . bin2hex(random_bytes(8)),
     userId: 'user_123',
     planId: 'plan_pro_monthly'
-);
+));
 
 // Start directly without trial (status: ACTIVE, issues initial invoice)
-$sub = $subscriptionService->subscribe(
+$sub = $subscriptionService->subscribe(new SubscribeRequest(
     id: 'sub_' . bin2hex(random_bytes(8)),
     userId: 'user_123',
     planId: 'plan_pro_monthly',
     skipTrial: true
-);
+));
 ```
 
 #### Checking Access (Feature Gating)
@@ -205,23 +208,41 @@ if ($subscriptionService->hasAccess(userId: 'user_123')) {
 
 #### Changing Plans (Scheduled vs Immediate Proration)
 ```php
+use Ttpryg\SubscriptionEngine\Application\DTO\ChangePlanRequest;
+
 // Option A: Schedule plan change for next billing renewal cycle (no proration)
-$subscriptionService->changePlan('sub_123', 'plan_enterprise', immediate: false);
+$subscriptionService->changePlan(new ChangePlanRequest(
+    subscriptionId: 'sub_123',
+    newPlanId: 'plan_enterprise',
+    immediate: false
+));
 
 // Option B: Immediate upgrade with automatic prorated invoice
-$subscriptionService->changePlan('sub_123', 'plan_enterprise', immediate: true);
+$subscriptionService->changePlan(new ChangePlanRequest(
+    subscriptionId: 'sub_123',
+    newPlanId: 'plan_enterprise',
+    immediate: true
+));
 ```
 
 #### Cancellation & Pause
 ```php
+use Ttpryg\SubscriptionEngine\Application\DTO\CancelSubscriptionRequest;
+
 // Cancel at period end (user keeps access until end of current billing cycle)
-$subscriptionService->cancel('sub_123', atPeriodEnd: true);
+$subscriptionService->cancel(new CancelSubscriptionRequest(
+    subscriptionId: 'sub_123',
+    atPeriodEnd: true
+));
 
 // Undo scheduled cancellation
 $subscriptionService->undoCancellation('sub_123');
 
 // Immediate cancellation (revokes access and voids outstanding unpaid invoices)
-$subscriptionService->cancel('sub_123', atPeriodEnd: false);
+$subscriptionService->cancel(new CancelSubscriptionRequest(
+    subscriptionId: 'sub_123',
+    atPeriodEnd: false
+));
 
 // Pause subscription (extends billing period by paused duration when resumed)
 $subscriptionService->pause('sub_123');
@@ -248,17 +269,20 @@ $dispatcher->listen(SubscriptionRenewalDueEvent::class, function (SubscriptionRe
 When your payment gateway webhook arrives, report the result:
 
 ```php
+use Ttpryg\SubscriptionEngine\Application\DTO\RecordPaymentFailureRequest;
+use Ttpryg\SubscriptionEngine\Application\DTO\RecordPaymentRequest;
+
 // Webhook: Payment Success (Safe & Idempotent)
-$subscriptionService->recordPayment(
+$subscriptionService->recordPayment(new RecordPaymentRequest(
     invoiceId: $payload['order_id'],
     paymentReference: $payload['transaction_id']
-);
+));
 
 // Webhook: Payment Failure
-$subscriptionService->recordPaymentFailure(
+$subscriptionService->recordPaymentFailure(new RecordPaymentFailureRequest(
     invoiceId: $payload['order_id'],
     reason: $payload['status_message']
-);
+));
 ```
 
 ---

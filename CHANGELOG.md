@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Application use cases (`src/Application/UseCase/*`) for subscription, payment, plan,
+  pause, resume, cancellation, and renewal workflows. `SubscriptionService` is now a thin
+  facade over these use cases, and read operations are exposed through
+  `SubscriptionQueryService`.
+- `Ttpryg\SubscriptionEngine\Domain\Service\ProrationCalculator` for mid-cycle plan-change
+  proration. `InvoiceService` centralizes invoice issuing, voiding, and outstanding checks.
+
 ### Changed
+
+- **Breaking:** `SubscriptionService` and `PlanService` now accept request DTOs
+  (`SubscribeRequest`, `ChangePlanRequest`, `RecordPaymentRequest`,
+  `RecordPaymentFailureRequest`, `CancelSubscriptionRequest`, and `CreatePlanRequest`)
+  instead of positional primitive parameters. Update call sites and imports accordingly.
 
 - Split the module into explicit Domain and Application layers:
   - Entities, enums, events, exceptions, value objects, and repository ports now live under
