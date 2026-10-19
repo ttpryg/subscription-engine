@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHP-based migrations: `MigrationRunner` now loads timestamped `YYYYMMDDHHMM_*.php`
   migration files returning a `Migration` instance, and exposes `rollback()` to revert
   the most recently applied migrations through `Migration::down()`.
+- MySQL/MariaDB integration coverage: the PDO repository tests run against a MariaDB
+  service when `SUBSCRIPTION_ENGINE_DB_DSN` is set, and CI runs a dedicated MariaDB job.
 
 ### Changed
 
@@ -31,6 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   name are still recognized, so the migration is not re-applied.
 - `DatabaseMigrator` no longer replays `database/schema.sql` against existing databases;
   schema changes after a fresh install now flow exclusively through migrations.
+- `database/schema.sql` is now portable across SQLite and MySQL/MariaDB: boolean columns
+  use `BOOLEAN`, and index creation no longer relies on `CREATE INDEX IF NOT EXISTS`
+  (which MySQL does not support). The index migration creates and drops indexes through
+  driver-aware existence checks instead.
+- **Breaking:** PostgreSQL is no longer listed as a supported database. The shipped
+  `database/schema.sql` was never PostgreSQL-compatible (MySQL-specific column types and
+  index syntax), so the documented support was inaccurate.
 
 - Split the module into explicit Domain and Application layers:
   - Entities, enums, events, exceptions, value objects, and repository ports now live under

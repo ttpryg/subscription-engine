@@ -31,3 +31,40 @@ jobs:
 
       - name: Run test suite
         run: composer test
+
+  test-mariadb:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: secret
+          MARIADB_DATABASE: subscription_engine
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: pdo, pdo_sqlite, pdo_mysql
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Run test suite against MariaDB
+        env:
+          SUBSCRIPTION_ENGINE_DB_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=subscription_engine;charset=utf8mb4'
+          SUBSCRIPTION_ENGINE_DB_USER: root
+          SUBSCRIPTION_ENGINE_DB_PASSWORD: secret
+        run: composer test

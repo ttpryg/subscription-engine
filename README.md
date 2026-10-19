@@ -13,7 +13,7 @@ Framework-agnostic PHP 8.1+ Subscription, Recurring Billing, and Plan Management
 - **State Machine Lifecycle**: Strict, guarded lifecycle state transitions (`TRIALING` -> `ACTIVE` <-> `PAST_DUE` -> `CANCELED` / `EXPIRED` / `PAUSED`).
 - **Decoupled Payment Gateway**: Framework-agnostic and gateway-neutral (Midtrans, Xendit, Stripe, Doku, etc.). The engine issues invoices and dispatches domain events; your application charges the customer and reports back.
 - **Proration Engine**: Supports both scheduled plan changes (applied at the next renewal cycle) and immediate plan upgrades/downgrades with automatic proration calculation.
-- **Atomic Concurrency & DB Safety**: Atomic upserts on MySQL/MariaDB and SQLite/PostgreSQL, safe idempotent webhook payment processing, and optional database transaction manager.
+- **Atomic Concurrency & DB Safety**: Atomic upserts on MySQL/MariaDB and SQLite, safe idempotent webhook payment processing, and optional database transaction manager.
 - **Time-Travel Testability**: Full PSR-20 `Psr\Clock\ClockInterface` support with `FixedClock` and `SystemClock` for reliable unit tests and time simulations.
 - **Leap Year & Month Clamping**: Month and year calendar math automatically clamps to the end of the month (e.g., Jan 31 + 1 month = Feb 28/29) without overflowing.
 
@@ -53,7 +53,13 @@ composer require ttpryg/subscription-engine
 
 ### Requirements
 - PHP 8.1 or higher
-- PDO Extension (`ext-pdo`) with MySQL/MariaDB or SQLite/PostgreSQL driver
+- PDO Extension (`ext-pdo`) with a MySQL/MariaDB or SQLite driver
+
+### Supported Databases
+- **SQLite** — used by the default test suite.
+- **MySQL 8+ / MariaDB** — integration-tested in CI.
+
+PostgreSQL is not supported by the shipped `database/schema.sql`.
 
 ---
 
@@ -102,12 +108,12 @@ use Ttpryg\SubscriptionEngine\Infrastructure\Database\Migration;
 return new class extends Migration {
     public function up(PDO $pdo): void
     {
-        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_example ON subscriptions(user_id)');
+        $pdo->exec('CREATE INDEX idx_example ON subscriptions(user_id)');
     }
 
     public function down(PDO $pdo): void
     {
-        $pdo->exec('DROP INDEX IF EXISTS idx_example');
+        $pdo->exec('DROP INDEX idx_example');
     }
 };
 ```
