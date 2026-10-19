@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Ttpryg\SubscriptionEngine\Tests\Integration\Infrastructure\Database;
 
+use InvalidArgumentException;
 use PDO;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Ttpryg\SubscriptionEngine\Infrastructure\Database\DatabaseMigrator;
 use Ttpryg\SubscriptionEngine\Infrastructure\Database\MigrationRunner;
 
@@ -30,7 +32,7 @@ class DatabaseMigratorTest extends TestCase
         $this->assertTrue($this->indexExists('idx_inv_overdue'));
 
         $applied = (new MigrationRunner($this->pdo))->appliedMigrations();
-        $this->assertContains('001_add_subscription_indexes', $applied);
+        $this->assertContains('202610190001_add_subscription_indexes', $applied);
     }
 
     public function test_migration_runner_adds_indexes_to_legacy_database(): void
@@ -40,7 +42,7 @@ class DatabaseMigratorTest extends TestCase
 
         $executed = (new MigrationRunner($this->pdo))->migrate();
 
-        $this->assertContains('001_add_subscription_indexes', $executed);
+        $this->assertContains('202610190001_add_subscription_indexes', $executed);
         $this->assertTrue($this->indexExists('idx_subs_user_store'));
         $this->assertTrue($this->indexExists('idx_subs_renewal'));
         $this->assertTrue($this->indexExists('idx_inv_subscription'));
@@ -52,7 +54,7 @@ class DatabaseMigratorTest extends TestCase
         $this->createLegacyTables();
         $runner = new MigrationRunner($this->pdo);
 
-        $this->assertContains('001_add_subscription_indexes', $runner->migrate());
+        $this->assertContains('202610190001_add_subscription_indexes', $runner->migrate());
         $this->assertSame([], $runner->migrate());
     }
 
@@ -75,6 +77,74 @@ class DatabaseMigratorTest extends TestCase
 
         $this->assertTrue($this->indexExists('idx_subs_user_store'));
         $this->assertSame(1, $this->countRows('subscriptions'));
+    }
+
+    public function test_migration_runner_skips_migration_recorded_under_legacy_name(): void
+    {
+        $this->createLegacyTables();
+        $this->createTrackerTable();
+        $this->pdo->exec("INSERT INTO subscription_engine_migrations (migration) VALUES ('001_add_subscription_indexes')");
+
+        $executed = (new MigrationRunner($this->pdo))->migrate();
+
+        $this->assertSame([], $executed);
+        $this->assertFalse($this->indexExists('idx_subs_user_store'));
+    }
+
+    public function test_rollback_reverts_migration_and_removes_tracker_entry(): void
+    {
+        $this->createLegacyTables();
+        $runner = new MigrationRunner($this->pdo);
+
+        $runner->migrate();
+        $this->assertTrue($this->indexExists('idx_subs_user_store'));
+
+        $rolledBack = $runner->rollback();
+
+        $this->assertSame(['202610190001_add_subscription_indexes'], $rolledBack);
+        $this->assertFalse($this->indexExists('idx_subs_user_store'));
+        $this->assertSame([], $runner->appliedMigrations());
+    }
+
+    public function test_rollback_allows_the_migration_to_be_reapplied(): void
+    {
+        $this->createLegacyTables();
+        $runner = new MigrationRunner($this->pdo);
+
+        $runner->migrate();
+        $runner->rollback();
+
+        $this->assertContains('202610190001_add_subscription_indexes', $runner->migrate());
+        $this->assertTrue($this->indexExists('idx_subs_user_store'));
+    }
+
+    public function test_rollback_requires_a_positive_step_count(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Rollback steps must be at least 1.');
+
+        (new MigrationRunner($this->pdo))->rollback(0);
+    }
+
+    public function test_rollback_fails_when_migration_file_is_missing(): void
+    {
+        $this->createTrackerTable();
+        $this->pdo->exec("INSERT INTO subscription_engine_migrations (migration) VALUES ('999999999999_missing')");
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("Cannot roll back migration '999999999999_missing': migration file not found.");
+
+        (new MigrationRunner($this->pdo))->rollback();
+    }
+
+    private function createTrackerTable(): void
+    {
+        $this->pdo->exec(
+            'CREATE TABLE IF NOT EXISTS subscription_engine_migrations (
+                migration VARCHAR(191) NOT NULL PRIMARY KEY,
+                applied_at TIMESTAMP NULL
+            )'
+        );
     }
 
     private function createLegacyTables(): void
