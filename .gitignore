@@ -1,5 +1,7 @@
+/.agents
 /vendor/
 /.phpunit.cache/
 .env
 *.log
 /.agents
+todo.md

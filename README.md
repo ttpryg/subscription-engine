@@ -99,6 +99,10 @@ $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 ### 1. Initializing Services
 
+The example below uses `ttpryg/event-dispatcher`. Install it with
+`composer require ttpryg/event-dispatcher`, or pass any
+`Psr\EventDispatcher\EventDispatcherInterface` implementation.
+
 ```php
 use PDO;
 use Ttpryg\EventDispatcher\Dispatcher;

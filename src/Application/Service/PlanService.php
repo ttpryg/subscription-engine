@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Ttpryg\SubscriptionEngine\Application\Service;
 
-use Ttpryg\EventDispatcher\Contracts\EventDispatcherInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;
 use Ttpryg\SubscriptionEngine\Domain\Enum\BillingInterval;
 use Ttpryg\SubscriptionEngine\Domain\Event\PlanCreatedEvent;
