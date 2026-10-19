@@ -9,12 +9,13 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Entry point migrasi schema subscription-engine.
+ * Entry point for subscription-engine schema migrations.
  *
- * - Fresh install: menjalankan `database/schema.sql` (source of truth terkini,
- *   idempotent) lalu menandai seluruh migrasi incremental sebagai baseline.
- * - Database existing: menjalankan migrasi incremental yang belum diterapkan,
- *   tanpa menyentuh data lama (schema.sql memakai CREATE TABLE/INDEX IF NOT EXISTS).
+ * - Fresh install: runs `database/schema.sql` (the latest snapshot) and marks
+ *   every migration as a baseline so it is not executed again.
+ * - Existing database: runs only the incremental migrations that have not been
+ *   applied, without touching existing data. `schema.sql` is skipped so its
+ *   definitions are not duplicated by migrations.
  */
 class DatabaseMigrator
 {
@@ -22,27 +23,25 @@ class DatabaseMigrator
 
     public function migrate(): void
     {
-        // Deteksi sebelum exec: fresh install belum punya tabel subscriptions.
-        $isFreshInstall = ! $this->tableExists('subscriptions');
-
-        $sql = file_get_contents(__DIR__.'/../../database/schema.sql');
-        if ($sql === false) {
-            throw new RuntimeException('Unable to load subscription-engine schema.sql file.');
-        }
-
-        $this->pdo->exec($sql);
-
         $runner = new MigrationRunner($this->pdo);
 
-        if ($isFreshInstall) {
-            // Fresh install: schema.sql sudah mencakup definisi terkini →
-            // tandai semua migrasi sebagai baseline agar tidak dieksekusi ulang.
+        // Detect before exec: a fresh install has no subscriptions table yet.
+        if (! $this->tableExists('subscriptions')) {
+            $sql = file_get_contents(__DIR__.'/../../database/schema.sql');
+            if ($sql === false) {
+                throw new RuntimeException('Unable to load subscription-engine schema.sql file.');
+            }
+
+            $this->pdo->exec($sql);
+
+            // Fresh install: schema.sql already reflects the latest schema, so
+            // mark every migration as a baseline to avoid executing them again.
             $runner->markAllAsMigrated();
 
             return;
         }
 
-        // Database existing: jalankan migrasi inkremental yang belum diterapkan.
+        // Existing database: run the incremental migrations that are still pending.
         $runner->migrate();
     }
 

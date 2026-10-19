@@ -86,12 +86,43 @@ $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 `DatabaseMigrator`:
 
-- **Fresh install** — runs `database/schema.sql` (the current source of truth)
+- **Fresh install** — runs `database/schema.sql` (the latest schema snapshot)
   and baselines every migration so it is not re-applied.
 - **Existing database** — runs only the incremental migrations in
   `database/migrations/` that are not yet recorded, leaving existing data
   untouched. Applied migrations are tracked in the `subscription_engine_migrations`
   table, so `migrate()` is safe to run repeatedly.
+
+Migration files are PHP classes named `YYYYMMDDHHMM_description.php` and return
+a `Migration` instance:
+
+```php
+use Ttpryg\SubscriptionEngine\Infrastructure\Database\Migration;
+
+return new class extends Migration {
+    public function up(PDO $pdo): void
+    {
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_example ON subscriptions(user_id)');
+    }
+
+    public function down(PDO $pdo): void
+    {
+        $pdo->exec('DROP INDEX IF EXISTS idx_example');
+    }
+};
+```
+
+Revert the most recently applied migration with `rollback()`:
+
+```php
+use Ttpryg\SubscriptionEngine\Infrastructure\Database\MigrationRunner;
+
+// Revert the last applied migration (throws if it has no safe down()).
+(new MigrationRunner($pdo))->rollback();
+
+// Revert the last two migrations.
+(new MigrationRunner($pdo))->rollback(2);
+```
 
 ---
 

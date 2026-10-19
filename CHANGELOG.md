@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SubscriptionQueryService`.
 - `Ttpryg\SubscriptionEngine\Domain\Service\ProrationCalculator` for mid-cycle plan-change
   proration. `InvoiceService` centralizes invoice issuing, voiding, and outstanding checks.
+- PHP-based migrations: `MigrationRunner` now loads timestamped `YYYYMMDDHHMM_*.php`
+  migration files returning a `Migration` instance, and exposes `rollback()` to revert
+  the most recently applied migrations through `Migration::down()`.
 
 ### Changed
 
@@ -22,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`SubscribeRequest`, `ChangePlanRequest`, `RecordPaymentRequest`,
   `RecordPaymentFailureRequest`, `CancelSubscriptionRequest`, and `CreatePlanRequest`)
   instead of positional primitive parameters. Update call sites and imports accordingly.
+- **Breaking:** the baseline migration moved from
+  `database/migrations/001_add_subscription_indexes.sql` to the timestamped
+  `202610190001_add_subscription_indexes.php`. Existing trackers that recorded the old
+  name are still recognized, so the migration is not re-applied.
+- `DatabaseMigrator` no longer replays `database/schema.sql` against existing databases;
+  schema changes after a fresh install now flow exclusively through migrations.
 
 - Split the module into explicit Domain and Application layers:
   - Entities, enums, events, exceptions, value objects, and repository ports now live under
