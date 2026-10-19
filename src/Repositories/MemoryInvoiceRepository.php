@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Ttpryg\SubscriptionEngine\Repositories;
 
 use DateTimeImmutable;
-use Ttpryg\SubscriptionEngine\Contracts\InvoiceRepositoryInterface;
-use Ttpryg\SubscriptionEngine\Entities\SubscriptionInvoice;
+use Ttpryg\SubscriptionEngine\Domain\Entity\SubscriptionInvoice;
+use Ttpryg\SubscriptionEngine\Domain\Repository\InvoiceRepositoryInterface;
 
 class MemoryInvoiceRepository implements InvoiceRepositoryInterface
 {

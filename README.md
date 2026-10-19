@@ -106,8 +106,8 @@ use Ttpryg\SubscriptionEngine\Clock\SystemClock;
 use Ttpryg\SubscriptionEngine\Repositories\PdoInvoiceRepository;
 use Ttpryg\SubscriptionEngine\Repositories\PdoPlanRepository;
 use Ttpryg\SubscriptionEngine\Repositories\PdoSubscriptionRepository;
-use Ttpryg\SubscriptionEngine\Services\PlanService;
-use Ttpryg\SubscriptionEngine\Services\SubscriptionService;
+use Ttpryg\SubscriptionEngine\Application\Service\PlanService;
+use Ttpryg\SubscriptionEngine\Application\Service\SubscriptionService;
 
 // Setup PDO connection
 $pdo = new PDO('mysql:host=127.0.0.1;dbname=app;charset=utf8mb4', 'user', 'secret', [
@@ -151,7 +151,7 @@ $subscriptionService = new SubscriptionService(
 ### 2. Managing Plans
 
 ```php
-use Ttpryg\SubscriptionEngine\Enums\BillingInterval;
+use Ttpryg\SubscriptionEngine\Domain\Enum\BillingInterval;
 
 // Create a Monthly Pro Plan with 7 days trial
 $plan = $planService->createPlan(
@@ -231,7 +231,7 @@ $subscriptionService->resume('sub_123');
 Because payment collection is decoupled, you listen to `SubscriptionRenewalDueEvent` to trigger a charge with your payment gateway:
 
 ```php
-use Ttpryg\SubscriptionEngine\Events\SubscriptionRenewalDueEvent;
+use Ttpryg\SubscriptionEngine\Domain\Event\SubscriptionRenewalDueEvent;
 
 $dispatcher->listen(SubscriptionRenewalDueEvent::class, function (SubscriptionRenewalDueEvent $event) {
     $invoice = $event->invoice;

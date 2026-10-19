@@ -6,9 +6,9 @@ namespace Ttpryg\SubscriptionEngine\Repositories;
 
 use DateTimeImmutable;
 use PDO;
-use Ttpryg\SubscriptionEngine\Contracts\SubscriptionRepositoryInterface;
-use Ttpryg\SubscriptionEngine\Entities\Subscription;
-use Ttpryg\SubscriptionEngine\Enums\SubscriptionStatus;
+use Ttpryg\SubscriptionEngine\Domain\Entity\Subscription;
+use Ttpryg\SubscriptionEngine\Domain\Enum\SubscriptionStatus;
+use Ttpryg\SubscriptionEngine\Domain\Repository\SubscriptionRepositoryInterface;
 use Ttpryg\SubscriptionEngine\Repositories\Concerns\InteractsWithPdo;
 
 class PdoSubscriptionRepository implements SubscriptionRepositoryInterface

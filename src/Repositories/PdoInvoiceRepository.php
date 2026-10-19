@@ -6,9 +6,9 @@ namespace Ttpryg\SubscriptionEngine\Repositories;
 
 use DateTimeImmutable;
 use PDO;
-use Ttpryg\SubscriptionEngine\Contracts\InvoiceRepositoryInterface;
-use Ttpryg\SubscriptionEngine\Entities\SubscriptionInvoice;
-use Ttpryg\SubscriptionEngine\Enums\InvoiceStatus;
+use Ttpryg\SubscriptionEngine\Domain\Entity\SubscriptionInvoice;
+use Ttpryg\SubscriptionEngine\Domain\Enum\InvoiceStatus;
+use Ttpryg\SubscriptionEngine\Domain\Repository\InvoiceRepositoryInterface;
 use Ttpryg\SubscriptionEngine\Repositories\Concerns\InteractsWithPdo;
 
 class PdoInvoiceRepository implements InvoiceRepositoryInterface
