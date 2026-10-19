@@ -41,9 +41,13 @@ class PdoSubscriptionRepository implements SubscriptionRepositoryInterface
         ]);
     }
 
-    public function findById(string $id): ?Subscription
+    public function findById(string $id, bool $lock = false): ?Subscription
     {
-        $stmt = $this->pdo->prepare(sprintf('SELECT * FROM %s WHERE id = :id', $this->table));
+        $sql = sprintf('SELECT * FROM %s WHERE id = :id', $this->table);
+        if ($lock) {
+            $sql .= ' FOR UPDATE';
+        }
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 

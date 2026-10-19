@@ -17,7 +17,7 @@ class MemoryPlanRepository implements PlanRepositoryInterface
         $this->plans[$plan->id] = $plan;
     }
 
-    public function findById(string $id): ?Plan
+    public function findById(string $id, bool $lock = false): ?Plan
     {
         return $this->plans[$id] ?? null;
     }

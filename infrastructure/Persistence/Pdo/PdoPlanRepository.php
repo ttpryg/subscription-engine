@@ -37,9 +37,13 @@ class PdoPlanRepository implements PlanRepositoryInterface
         ]);
     }
 
-    public function findById(string $id): ?Plan
+    public function findById(string $id, bool $lock = false): ?Plan
     {
-        $stmt = $this->pdo->prepare(sprintf('SELECT * FROM %s WHERE id = :id', $this->table));
+        $sql = sprintf('SELECT * FROM %s WHERE id = :id', $this->table);
+        if ($lock) {
+            $sql .= ' FOR UPDATE';
+        }
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
