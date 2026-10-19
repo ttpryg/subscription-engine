@@ -98,6 +98,21 @@ class InMemoryRepositoriesTest extends TestCase
         $this->assertCount(2, $repository->findOverdue($now));
     }
 
+    public function test_memory_repositories_ignore_lock_flag(): void
+    {
+        $planRepo = new MemoryPlanRepository;
+        $planRepo->save(new Plan('plan_1', 'Plan 1', 50000.0, BillingInterval::MONTH));
+
+        $subRepo = new MemorySubscriptionRepository;
+        $subRepo->save($this->subscription('sub_1', 'user_1'));
+
+        // lock: true should be ignored by in-memory adapters
+        $this->assertSame('Plan 1', $planRepo->findById('plan_1', lock: true)?->name);
+        $this->assertSame('sub_1', $subRepo->findById('sub_1', lock: true)?->id);
+        $this->assertNull($planRepo->findById('missing', lock: true));
+        $this->assertNull($subRepo->findById('missing', lock: true));
+    }
+
     private function subscription(string $id, string $userId, ?string $storeId = null, string $end = '2026-02-01 00:00:00'): Subscription
     {
         $start = new DateTimeImmutable('2026-01-01 00:00:00');

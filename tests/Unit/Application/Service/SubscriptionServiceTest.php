@@ -303,4 +303,30 @@ class SubscriptionServiceTest extends TestCase
         $this->assertSame(1, $summary['expired']);
         $this->assertSame(SubscriptionStatus::EXPIRED, $this->service->getSubscription('sub_1')->status);
     }
+
+    public function test_subscribe_runs_inside_transaction_manager_when_provided(): void
+    {
+        $transactionManagerCalled = false;
+
+        $service = new SubscriptionService(
+            planRepository: $this->planRepo,
+            subscriptionRepository: $this->subRepo,
+            invoiceRepository: $this->invRepo,
+            clock: $this->clock,
+            eventDispatcher: null,
+            graceDays: 3,
+            idGenerator: fn (): string => 'inv_'.uniqid(),
+            transactionManager: function (callable $operation) use (&$transactionManagerCalled): mixed {
+                $transactionManagerCalled = true;
+
+                return $operation();
+            }
+        );
+
+        $sub = $service->subscribe(new SubscribeRequest(id: 'sub_tx', userId: 'user_1', planId: 'plan_monthly'));
+
+        $this->assertTrue($transactionManagerCalled);
+        $this->assertSame('sub_tx', $sub->id);
+        $this->assertSame(SubscriptionStatus::TRIALING, $sub->status);
+    }
 }
