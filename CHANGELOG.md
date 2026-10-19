@@ -23,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Breaking:** update imports for persistence adapters and the migration runner.
 - Application services now type-hint `Psr\EventDispatcher\EventDispatcherInterface`
   instead of the concrete `Ttpryg\EventDispatcher\Contracts\EventDispatcherInterface`.
-  `ttpryg/event-dispatcher` remains the recommended dispatcher implementation.
+- Removed the hard dependency on `ttpryg/event-dispatcher`; it is now listed as a
+  suggested PSR-14 implementation. Consumers may use any PSR-14 dispatcher.
 
 ## [1.1.0] - 2026-10-18
 
