@@ -7,7 +7,7 @@ namespace Ttpryg\SubscriptionEngine\Tests\Unit\Application\Service;
 use DateTimeImmutable;
 use DomainException;
 use PHPUnit\Framework\TestCase;
-use Ttpryg\EventDispatcher\Contracts\EventDispatcherInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Ttpryg\SubscriptionEngine\Application\Service\SubscriptionService;
 use Ttpryg\SubscriptionEngine\Clock\FixedClock;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;

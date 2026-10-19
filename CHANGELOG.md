@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `Ttpryg\SubscriptionEngine\Infrastructure\Database`.
   - Composer PSR-4 autoloading now maps the `Infrastructure\` namespace to `infrastructure/`.
   - **Breaking:** update imports for persistence adapters and the migration runner.
+- Application services now type-hint `Psr\EventDispatcher\EventDispatcherInterface`
+  instead of the concrete `Ttpryg\EventDispatcher\Contracts\EventDispatcherInterface`.
+  `ttpryg/event-dispatcher` remains the recommended dispatcher implementation.
 
 ## [1.1.0] - 2026-10-18
 
