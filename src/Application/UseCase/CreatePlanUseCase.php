@@ -27,7 +27,7 @@ final class CreatePlanUseCase
     {
         $operation = fn (): Plan => $this->doExecute($request);
 
-        return $this->transactionManager !== null
+        return $this->transactionManager instanceof \Closure
             ? ($this->transactionManager)($operation)
             : $operation();
     }

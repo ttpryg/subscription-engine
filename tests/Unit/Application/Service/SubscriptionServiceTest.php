@@ -313,7 +313,6 @@ class SubscriptionServiceTest extends TestCase
             subscriptionRepository: $this->subRepo,
             invoiceRepository: $this->invRepo,
             clock: $this->clock,
-            eventDispatcher: null,
             graceDays: 3,
             idGenerator: fn (): string => 'inv_'.uniqid(),
             transactionManager: function (callable $operation) use (&$transactionManagerCalled): mixed {

@@ -83,7 +83,7 @@ class SubscriptionService
             : Closure::fromCallable(new Uuid4Generator);
         $this->transactionManager = $transactionManager !== null
             ? Closure::fromCallable($transactionManager)
-            : ($pdo !== null
+            : ($pdo instanceof \PDO
                 ? Closure::fromCallable(fn (callable $operation): mixed => $this->runInTransaction($pdo, $operation))
                 : null);
         $this->invoiceService = new InvoiceService(

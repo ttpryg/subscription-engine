@@ -29,7 +29,7 @@ final class ResumeSubscriptionUseCase
     {
         $operation = fn (): Subscription => $this->doExecute($subscriptionId);
 
-        return $this->transactionManager !== null
+        return $this->transactionManager instanceof \Closure
             ? ($this->transactionManager)($operation)
             : $operation();
     }
