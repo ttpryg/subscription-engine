@@ -143,7 +143,7 @@ The example below uses `ttpryg/event-dispatcher`. Install it with
 ```php
 use PDO;
 use Ttpryg\EventDispatcher\Dispatcher;
-use Ttpryg\SubscriptionEngine\Clock\SystemClock;
+use Ttpryg\SubscriptionEngine\Domain\Clock\SystemClock;
 use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoInvoiceRepository;
 use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoPlanRepository;
 use Ttpryg\SubscriptionEngine\Infrastructure\Persistence\Pdo\PdoSubscriptionRepository;

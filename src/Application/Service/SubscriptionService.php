@@ -21,7 +21,7 @@ use Ttpryg\SubscriptionEngine\Application\UseCase\RecordPaymentUseCase;
 use Ttpryg\SubscriptionEngine\Application\UseCase\ResumeSubscriptionUseCase;
 use Ttpryg\SubscriptionEngine\Application\UseCase\SubscribeUseCase;
 use Ttpryg\SubscriptionEngine\Application\UseCase\UndoCancellationUseCase;
-use Ttpryg\SubscriptionEngine\Clock\SystemClock;
+use Ttpryg\SubscriptionEngine\Domain\Clock\SystemClock;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Subscription;
 use Ttpryg\SubscriptionEngine\Domain\Entity\SubscriptionInvoice;
 use Ttpryg\SubscriptionEngine\Domain\Repository\InvoiceRepositoryInterface;
