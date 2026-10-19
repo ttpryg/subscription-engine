@@ -14,7 +14,7 @@ use Ttpryg\SubscriptionEngine\Application\DTO\RecordPaymentFailureRequest;
 use Ttpryg\SubscriptionEngine\Application\DTO\RecordPaymentRequest;
 use Ttpryg\SubscriptionEngine\Application\DTO\SubscribeRequest;
 use Ttpryg\SubscriptionEngine\Application\Service\SubscriptionService;
-use Ttpryg\SubscriptionEngine\Clock\FixedClock;
+use Ttpryg\SubscriptionEngine\Domain\Clock\FixedClock;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;
 use Ttpryg\SubscriptionEngine\Domain\Enum\BillingInterval;
 use Ttpryg\SubscriptionEngine\Domain\Enum\InvoiceStatus;

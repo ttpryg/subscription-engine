@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** PostgreSQL is no longer listed as a supported database. The shipped
   `database/schema.sql` was never PostgreSQL-compatible (MySQL-specific column types and
   index syntax), so the documented support was inaccurate.
+- **Breaking:** `SystemClock` and `FixedClock` moved from
+  `Ttpryg\SubscriptionEngine\Clock` to `Ttpryg\SubscriptionEngine\Domain\Clock` so every
+  Domain directory follows the singular naming convention.
 
 - Split the module into explicit Domain and Application layers:
   - Entities, enums, events, exceptions, value objects, and repository ports now live under

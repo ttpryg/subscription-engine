@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ttpryg\SubscriptionEngine\Clock;
+namespace Ttpryg\SubscriptionEngine\Domain\Clock;
 
 use DateTimeImmutable;
 use Psr\Clock\ClockInterface;
