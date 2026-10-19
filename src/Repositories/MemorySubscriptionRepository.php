@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Ttpryg\SubscriptionEngine\Repositories;
 
 use DateTimeImmutable;
-use Ttpryg\SubscriptionEngine\Contracts\SubscriptionRepositoryInterface;
-use Ttpryg\SubscriptionEngine\Entities\Subscription;
-use Ttpryg\SubscriptionEngine\Enums\SubscriptionStatus;
+use Ttpryg\SubscriptionEngine\Domain\Entity\Subscription;
+use Ttpryg\SubscriptionEngine\Domain\Enum\SubscriptionStatus;
+use Ttpryg\SubscriptionEngine\Domain\Repository\SubscriptionRepositoryInterface;
 
 class MemorySubscriptionRepository implements SubscriptionRepositoryInterface
 {

@@ -5,6 +5,16 @@ All notable changes to `ttpryg/subscription-engine` will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Split the module into explicit Domain and Application layers:
+  - Entities, enums, events, exceptions, value objects, and repository ports now live under
+    `Ttpryg\SubscriptionEngine\Domain\*`.
+  - Application services now live under `Ttpryg\SubscriptionEngine\Application\Service\*`.
+  - **Breaking:** all public class namespaces moved. Update imports accordingly.
+
 ## [1.1.0] - 2026-10-18
 
 ### Added
@@ -45,5 +55,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SubscriptionPaymentFailedEvent`.
 - Unit and integration tests.
 
-[Unreleased]: https://github.com/ttpryg/subscription-engine/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/ttpryg/subscription-engine/compare/1.1.0...HEAD
 [1.0.0]: https://github.com/ttpryg/subscription-engine/releases/tag/1.0.0

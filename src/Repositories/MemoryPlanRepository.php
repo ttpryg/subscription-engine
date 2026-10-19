@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Ttpryg\SubscriptionEngine\Repositories;
 
-use Ttpryg\SubscriptionEngine\Contracts\PlanRepositoryInterface;
-use Ttpryg\SubscriptionEngine\Entities\Plan;
+use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;
+use Ttpryg\SubscriptionEngine\Domain\Repository\PlanRepositoryInterface;
 
 class MemoryPlanRepository implements PlanRepositoryInterface
 {

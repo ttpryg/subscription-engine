@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Ttpryg\SubscriptionEngine\Repositories;
 
 use PDO;
-use Ttpryg\SubscriptionEngine\Contracts\PlanRepositoryInterface;
-use Ttpryg\SubscriptionEngine\Entities\Plan;
-use Ttpryg\SubscriptionEngine\Enums\BillingInterval;
+use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;
+use Ttpryg\SubscriptionEngine\Domain\Enum\BillingInterval;
+use Ttpryg\SubscriptionEngine\Domain\Repository\PlanRepositoryInterface;
 use Ttpryg\SubscriptionEngine\Repositories\Concerns\InteractsWithPdo;
 
 class PdoPlanRepository implements PlanRepositoryInterface
