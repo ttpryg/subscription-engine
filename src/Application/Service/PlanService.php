@@ -5,46 +5,26 @@ declare(strict_types=1);
 namespace Ttpryg\SubscriptionEngine\Application\Service;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Ttpryg\SubscriptionEngine\Application\DTO\CreatePlanRequest;
+use Ttpryg\SubscriptionEngine\Application\UseCase\CreatePlanUseCase;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;
-use Ttpryg\SubscriptionEngine\Domain\Enum\BillingInterval;
-use Ttpryg\SubscriptionEngine\Domain\Event\PlanCreatedEvent;
 use Ttpryg\SubscriptionEngine\Domain\Exception\PlanNotFoundException;
 use Ttpryg\SubscriptionEngine\Domain\Repository\PlanRepositoryInterface;
 
 class PlanService
 {
+    private readonly CreatePlanUseCase $createPlanUseCase;
+
     public function __construct(
         private readonly PlanRepositoryInterface $planRepository,
-        private readonly ?EventDispatcherInterface $eventDispatcher = null
-    ) {}
+        ?EventDispatcherInterface $eventDispatcher = null
+    ) {
+        $this->createPlanUseCase = new CreatePlanUseCase($planRepository, $eventDispatcher);
+    }
 
-    public function createPlan(
-        string $id,
-        string $name,
-        float $price,
-        BillingInterval $interval,
-        int $intervalCount = 1,
-        string $currency = 'IDR',
-        int $trialDays = 0,
-        ?string $description = null,
-        ?string $storeId = null
-    ): Plan {
-        $plan = new Plan(
-            id: $id,
-            name: $name,
-            price: $price,
-            interval: $interval,
-            intervalCount: $intervalCount,
-            currency: $currency,
-            trialDays: $trialDays,
-            description: $description,
-            storeId: $storeId
-        );
-
-        $this->planRepository->save($plan);
-        $this->eventDispatcher?->dispatch(new PlanCreatedEvent($plan));
-
-        return $plan;
+    public function createPlan(CreatePlanRequest $request): Plan
+    {
+        return $this->createPlanUseCase->execute($request);
     }
 
     public function getPlan(string $id): Plan

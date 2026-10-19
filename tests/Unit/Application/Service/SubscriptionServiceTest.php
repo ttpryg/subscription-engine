@@ -8,6 +8,11 @@ use DateTimeImmutable;
 use DomainException;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Ttpryg\SubscriptionEngine\Application\DTO\CancelSubscriptionRequest;
+use Ttpryg\SubscriptionEngine\Application\DTO\ChangePlanRequest;
+use Ttpryg\SubscriptionEngine\Application\DTO\RecordPaymentFailureRequest;
+use Ttpryg\SubscriptionEngine\Application\DTO\RecordPaymentRequest;
+use Ttpryg\SubscriptionEngine\Application\DTO\SubscribeRequest;
 use Ttpryg\SubscriptionEngine\Application\Service\SubscriptionService;
 use Ttpryg\SubscriptionEngine\Clock\FixedClock;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;
@@ -85,7 +90,7 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_subscribe_with_trial(): void
     {
-        $sub = $this->service->subscribe('sub_1', 'user_1', 'plan_monthly');
+        $sub = $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_monthly'));
 
         $this->assertSame(SubscriptionStatus::TRIALING, $sub->status);
         $this->assertEquals(new DateTimeImmutable('2026-01-15 00:00:00'), $sub->trialEndsAt);
@@ -98,7 +103,7 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_subscribe_skipping_trial_issues_invoice(): void
     {
-        $sub = $this->service->subscribe('sub_1', 'user_1', 'plan_monthly', skipTrial: true);
+        $sub = $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_monthly', skipTrial: true));
 
         $this->assertSame(SubscriptionStatus::ACTIVE, $sub->status);
         $this->assertNull($sub->trialEndsAt);
@@ -116,12 +121,12 @@ class SubscriptionServiceTest extends TestCase
         $plan?->deactivate();
 
         $this->expectException(DomainException::class);
-        $this->service->subscribe('sub_1', 'user_1', 'plan_monthly');
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_monthly'));
     }
 
     public function test_has_access(): void
     {
-        $this->service->subscribe('sub_1', 'user_1', 'plan_pro');
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_pro'));
         $this->assertTrue($this->service->hasAccess('user_1'));
         $this->assertTrue($this->service->hasAccess('user_1', 'plan_pro'));
         $this->assertFalse($this->service->hasAccess('user_1', 'plan_monthly'));
@@ -130,13 +135,13 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_record_payment_and_idempotency(): void
     {
-        $this->service->subscribe('sub_1', 'user_1', 'plan_pro');
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_pro'));
         $invoices = $this->service->getInvoices('sub_1');
         $this->assertCount(1, $invoices);
         $invoice = $invoices[0];
 
         // 1st payment record
-        $paidInvoice = $this->service->recordPayment($invoice->id, 'ref_tx_123');
+        $paidInvoice = $this->service->recordPayment(new RecordPaymentRequest(invoiceId: $invoice->id, paymentReference: 'ref_tx_123'));
         $this->assertSame(InvoiceStatus::PAID, $paidInvoice->status);
         $this->assertSame('ref_tx_123', $paidInvoice->paymentReference);
 
@@ -144,7 +149,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertCount(1, $succeededEvents);
 
         // 2nd payment record with same reference should be idempotent
-        $secondResult = $this->service->recordPayment($invoice->id, 'ref_tx_123');
+        $secondResult = $this->service->recordPayment(new RecordPaymentRequest(invoiceId: $invoice->id, paymentReference: 'ref_tx_123'));
         $this->assertSame(InvoiceStatus::PAID, $secondResult->status);
         // Event should NOT be dispatched a second time
         $succeededEvents2 = array_filter($this->dispatchedEvents, fn (object $e): bool => $e instanceof SubscriptionPaymentSucceededEvent);
@@ -153,23 +158,23 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_payment_reactivates_past_due_subscription(): void
     {
-        $sub = $this->service->subscribe('sub_1', 'user_1', 'plan_pro');
+        $sub = $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_pro'));
         $invoice = $this->service->getInvoices('sub_1')[0];
 
         $sub->markPastDue($this->clock->now());
         $this->subRepo->save($sub);
         $this->assertSame(SubscriptionStatus::PAST_DUE, $this->service->getSubscription('sub_1')->status);
 
-        $this->service->recordPayment($invoice->id);
+        $this->service->recordPayment(new RecordPaymentRequest(invoiceId: $invoice->id));
         $this->assertSame(SubscriptionStatus::ACTIVE, $this->service->getSubscription('sub_1')->status);
     }
 
     public function test_record_payment_failure(): void
     {
-        $this->service->subscribe('sub_1', 'user_1', 'plan_pro');
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_pro'));
         $invoice = $this->service->getInvoices('sub_1')[0];
 
-        $this->service->recordPaymentFailure($invoice->id, 'insufficient_funds');
+        $this->service->recordPaymentFailure(new RecordPaymentFailureRequest(invoiceId: $invoice->id, reason: 'insufficient_funds'));
         $retrieved = $this->invRepo->findById($invoice->id);
         $this->assertNotNull($retrieved);
         $this->assertSame(InvoiceStatus::FAILED, $retrieved->status);
@@ -178,8 +183,8 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_change_plan_scheduled(): void
     {
-        $this->service->subscribe('sub_1', 'user_1', 'plan_monthly', skipTrial: true);
-        $this->service->changePlan('sub_1', 'plan_pro', immediate: false);
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_monthly', skipTrial: true));
+        $this->service->changePlan(new ChangePlanRequest(subscriptionId: 'sub_1', newPlanId: 'plan_pro', immediate: false));
 
         $updated = $this->service->getSubscription('sub_1');
         $this->assertSame('plan_monthly', $updated->planId);
@@ -189,13 +194,13 @@ class SubscriptionServiceTest extends TestCase
     public function test_change_plan_immediate_with_proration(): void
     {
         // Subscribe to monthly plan (100k) on 2026-01-01, period ends 2026-02-01 (31 days)
-        $this->service->subscribe('sub_1', 'user_1', 'plan_monthly', skipTrial: true);
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_monthly', skipTrial: true));
 
         // Advance 15.5 days (approx halfway)
         $this->clock->set(new DateTimeImmutable('2026-01-16 12:00:00'));
 
         // Upgrade immediately to pro plan (200k)
-        $this->service->changePlan('sub_1', 'plan_pro', immediate: true);
+        $this->service->changePlan(new ChangePlanRequest(subscriptionId: 'sub_1', newPlanId: 'plan_pro', immediate: true));
 
         $updated = $this->service->getSubscription('sub_1');
         $this->assertSame('plan_pro', $updated->planId);
@@ -212,8 +217,8 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_cancel_at_period_end_and_undo(): void
     {
-        $this->service->subscribe('sub_1', 'user_1', 'plan_pro');
-        $this->service->cancel('sub_1', atPeriodEnd: true);
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_pro'));
+        $this->service->cancel(new CancelSubscriptionRequest(subscriptionId: 'sub_1', atPeriodEnd: true));
 
         $sub = $this->service->getSubscription('sub_1');
         $this->assertTrue($sub->cancelAtPeriodEnd);
@@ -226,11 +231,11 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_cancel_immediate_voids_outstanding_invoices(): void
     {
-        $this->service->subscribe('sub_1', 'user_1', 'plan_pro');
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_pro'));
         $invoice = $this->service->getInvoices('sub_1')[0];
         $this->assertTrue($invoice->isOutstanding());
 
-        $this->service->cancel('sub_1', atPeriodEnd: false);
+        $this->service->cancel(new CancelSubscriptionRequest(subscriptionId: 'sub_1', atPeriodEnd: false));
         $sub = $this->service->getSubscription('sub_1');
         $this->assertSame(SubscriptionStatus::CANCELED, $sub->status);
 
@@ -240,7 +245,7 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_pause_and_resume(): void
     {
-        $this->service->subscribe('sub_1', 'user_1', 'plan_pro');
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_pro'));
         $this->service->pause('sub_1');
 
         $sub = $this->service->getSubscription('sub_1');
@@ -257,7 +262,7 @@ class SubscriptionServiceTest extends TestCase
     public function test_process_renewals(): void
     {
         // 1. Subscribe user_1 (period ends Feb 1, invoice due Jan 4)
-        $this->service->subscribe('sub_1', 'user_1', 'plan_pro');
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_pro'));
         $inv1 = $this->service->getInvoices('sub_1')[0];
 
         // Fast forward to Jan 5 (invoice is now overdue, graceDays = 3)
@@ -268,7 +273,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertSame(SubscriptionStatus::PAST_DUE, $this->service->getSubscription('sub_1')->status);
 
         // Pay the invoice to reactivate
-        $this->service->recordPayment($inv1->id);
+        $this->service->recordPayment(new RecordPaymentRequest(invoiceId: $inv1->id));
         $this->assertSame(SubscriptionStatus::ACTIVE, $this->service->getSubscription('sub_1')->status);
 
         // Fast forward to Feb 2 (period ended on Feb 1, renewal is due)
@@ -288,8 +293,8 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_process_renewals_expires_when_cancel_at_period_end(): void
     {
-        $this->service->subscribe('sub_1', 'user_1', 'plan_pro');
-        $this->service->cancel('sub_1', atPeriodEnd: true);
+        $this->service->subscribe(new SubscribeRequest(id: 'sub_1', userId: 'user_1', planId: 'plan_pro'));
+        $this->service->cancel(new CancelSubscriptionRequest(subscriptionId: 'sub_1', atPeriodEnd: true));
 
         // Fast forward past currentPeriodEnd
         $this->clock->set(new DateTimeImmutable('2026-02-05 00:00:00'));
