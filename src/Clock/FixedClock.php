@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Ttpryg\SubscriptionEngine\Clock;
 
 use DateTimeImmutable;
-use Ttpryg\SubscriptionEngine\Contracts\ClockInterface;
+use Psr\Clock\ClockInterface;
 
 /** Controllable clock, useful for tests and simulations. */
 final class FixedClock implements ClockInterface

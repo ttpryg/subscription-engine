@@ -14,7 +14,7 @@ Framework-agnostic PHP 8.1+ Subscription, Recurring Billing, and Plan Management
 - **Decoupled Payment Gateway**: Framework-agnostic and gateway-neutral (Midtrans, Xendit, Stripe, Doku, etc.). The engine issues invoices and dispatches domain events; your application charges the customer and reports back.
 - **Proration Engine**: Supports both scheduled plan changes (applied at the next renewal cycle) and immediate plan upgrades/downgrades with automatic proration calculation.
 - **Atomic Concurrency & DB Safety**: Atomic upserts on MySQL/MariaDB and SQLite/PostgreSQL, safe idempotent webhook payment processing, and optional database transaction manager.
-- **Time-Travel Testability**: Full `ClockInterface` support with `FixedClock` and `SystemClock` for reliable unit tests and time simulations.
+- **Time-Travel Testability**: Full PSR-20 `Psr\Clock\ClockInterface` support with `FixedClock` and `SystemClock` for reliable unit tests and time simulations.
 - **Leap Year & Month Clamping**: Month and year calendar math automatically clamps to the end of the month (e.g., Jan 31 + 1 month = Feb 28/29) without overflowing.
 
 ---

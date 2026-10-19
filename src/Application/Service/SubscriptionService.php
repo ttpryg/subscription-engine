@@ -6,9 +6,9 @@ namespace Ttpryg\SubscriptionEngine\Application\Service;
 
 use Closure;
 use DomainException;
+use Psr\Clock\ClockInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Ttpryg\SubscriptionEngine\Clock\SystemClock;
-use Ttpryg\SubscriptionEngine\Contracts\ClockInterface;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Plan;
 use Ttpryg\SubscriptionEngine\Domain\Entity\Subscription;
 use Ttpryg\SubscriptionEngine\Domain\Entity\SubscriptionInvoice;
