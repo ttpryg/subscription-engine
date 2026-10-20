@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ttpryg\SubscriptionEngine\Application\Service;
 
 use Closure;
+use PDO;
 use Psr\Clock\ClockInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Ttpryg\SubscriptionEngine\Application\DTO\CancelSubscriptionRequest;
@@ -41,6 +42,9 @@ use Ttpryg\SubscriptionEngine\Domain\Service\ProrationCalculator;
  *
  * Payment collection is intentionally decoupled: listen to SubscriptionRenewalDueEvent,
  * charge the invoice with your gateway, then call recordPayment() or recordPaymentFailure().
+ *
+ * A PDO connection (or a custom `$transactionManager`) makes every write use case run inside
+ * a database transaction, so billing mutations are atomic.
  */
 class SubscriptionService
 {
@@ -60,6 +64,7 @@ class SubscriptionService
      * @param  int  $graceDays  Days after an invoice is issued before the subscription becomes PAST_DUE.
      * @param  (callable(): string)|null  $idGenerator  Generates invoice IDs (defaults to UUID v4).
      * @param  (callable(callable(): mixed): mixed)|null  $transactionManager  Wraps execution in a DB transaction.
+     * @param  PDO|null  $pdo  PDO connection used to build a default transaction manager when none is given.
      */
     public function __construct(
         private readonly PlanRepositoryInterface $planRepository,
@@ -69,13 +74,18 @@ class SubscriptionService
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
         int $graceDays = 3,
         ?callable $idGenerator = null,
-        ?callable $transactionManager = null
+        ?callable $transactionManager = null,
+        ?PDO $pdo = null
     ) {
         $this->clock = $clock ?? new SystemClock;
         $this->idGenerator = $idGenerator !== null
             ? Closure::fromCallable($idGenerator)
             : Closure::fromCallable(new Uuid4Generator);
-        $this->transactionManager = $transactionManager !== null ? Closure::fromCallable($transactionManager) : null;
+        $this->transactionManager = $transactionManager !== null
+            ? Closure::fromCallable($transactionManager)
+            : ($pdo instanceof \PDO
+                ? Closure::fromCallable(fn (callable $operation): mixed => $this->runInTransaction($pdo, $operation))
+                : null);
         $this->invoiceService = new InvoiceService(
             $invoiceRepository,
             $this->clock,
@@ -94,7 +104,8 @@ class SubscriptionService
             $this->subscriptionRepository,
             $this->invoiceService,
             $this->clock,
-            $this->eventDispatcher
+            $this->eventDispatcher,
+            $this->transactionManager
         ))->execute($request);
     }
 
@@ -128,7 +139,8 @@ class SubscriptionService
             $this->subscriptionRepository,
             $this->invoiceService,
             $this->clock,
-            $this->eventDispatcher
+            $this->eventDispatcher,
+            $this->transactionManager
         ))->execute($request);
     }
 
@@ -137,7 +149,8 @@ class SubscriptionService
         return (new RecordPaymentFailureUseCase(
             $this->invoiceRepository,
             $this->subscriptionRepository,
-            $this->eventDispatcher
+            $this->eventDispatcher,
+            $this->transactionManager
         ))->execute($request);
     }
 
@@ -149,7 +162,8 @@ class SubscriptionService
             $this->invoiceService,
             $this->prorationCalculator,
             $this->clock,
-            $this->eventDispatcher
+            $this->eventDispatcher,
+            $this->transactionManager
         ))->execute($request);
     }
 
@@ -159,7 +173,8 @@ class SubscriptionService
             $this->subscriptionRepository,
             $this->invoiceService,
             $this->clock,
-            $this->eventDispatcher
+            $this->eventDispatcher,
+            $this->transactionManager
         ))->execute($request);
     }
 
@@ -167,7 +182,8 @@ class SubscriptionService
     {
         return (new UndoCancellationUseCase(
             $this->subscriptionRepository,
-            $this->clock
+            $this->clock,
+            $this->transactionManager
         ))->execute($subscriptionId);
     }
 
@@ -176,7 +192,8 @@ class SubscriptionService
         return (new PauseSubscriptionUseCase(
             $this->subscriptionRepository,
             $this->clock,
-            $this->eventDispatcher
+            $this->eventDispatcher,
+            $this->transactionManager
         ))->execute($subscriptionId);
     }
 
@@ -185,7 +202,8 @@ class SubscriptionService
         return (new ResumeSubscriptionUseCase(
             $this->subscriptionRepository,
             $this->clock,
-            $this->eventDispatcher
+            $this->eventDispatcher,
+            $this->transactionManager
         ))->execute($subscriptionId);
     }
 
@@ -205,5 +223,24 @@ class SubscriptionService
             $this->eventDispatcher,
             $this->transactionManager
         ))->execute();
+    }
+
+    /**
+     * Run a callable inside a PDO transaction.
+     */
+    private function runInTransaction(PDO $pdo, callable $operation): mixed
+    {
+        $pdo->beginTransaction();
+
+        try {
+            $result = $operation();
+            $pdo->commit();
+
+            return $result;
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+
+            throw $e;
+        }
     }
 }

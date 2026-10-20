@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ttpryg\SubscriptionEngine\Application\UseCase;
 
+use Closure;
 use Psr\Clock\ClockInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Ttpryg\SubscriptionEngine\Application\DTO\CancelSubscriptionRequest;
@@ -16,16 +17,30 @@ use Ttpryg\SubscriptionEngine\Domain\Repository\SubscriptionRepositoryInterface;
 
 final class CancelSubscriptionUseCase
 {
+    private readonly ?Closure $transactionManager;
+
     public function __construct(
         private readonly SubscriptionRepositoryInterface $subscriptionRepository,
         private readonly InvoiceService $invoiceService,
         private readonly ClockInterface $clock,
-        private readonly ?EventDispatcherInterface $eventDispatcher = null
-    ) {}
+        private readonly ?EventDispatcherInterface $eventDispatcher = null,
+        ?callable $transactionManager = null
+    ) {
+        $this->transactionManager = $transactionManager !== null ? Closure::fromCallable($transactionManager) : null;
+    }
 
     public function execute(CancelSubscriptionRequest $request): Subscription
     {
-        $subscription = $this->subscriptionRepository->findById($request->subscriptionId)
+        $operation = fn (): Subscription => $this->doExecute($request);
+
+        return $this->transactionManager instanceof \Closure
+            ? ($this->transactionManager)($operation)
+            : $operation();
+    }
+
+    private function doExecute(CancelSubscriptionRequest $request): Subscription
+    {
+        $subscription = $this->subscriptionRepository->findById($request->subscriptionId, lock: true)
             ?? throw SubscriptionNotFoundException::withId($request->subscriptionId);
 
         $subscription->cancel($this->clock->now(), $request->atPeriodEnd);

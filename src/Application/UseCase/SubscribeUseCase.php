@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ttpryg\SubscriptionEngine\Application\UseCase;
 
+use Closure;
 use DomainException;
 use Psr\Clock\ClockInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -19,17 +20,31 @@ use Ttpryg\SubscriptionEngine\Domain\ValueObject\BillingPeriod;
 
 final class SubscribeUseCase
 {
+    private readonly ?Closure $transactionManager;
+
     public function __construct(
         private readonly PlanRepositoryInterface $planRepository,
         private readonly SubscriptionRepositoryInterface $subscriptionRepository,
         private readonly InvoiceService $invoiceService,
         private readonly ClockInterface $clock,
-        private readonly ?EventDispatcherInterface $eventDispatcher = null
-    ) {}
+        private readonly ?EventDispatcherInterface $eventDispatcher = null,
+        ?callable $transactionManager = null
+    ) {
+        $this->transactionManager = $transactionManager !== null ? Closure::fromCallable($transactionManager) : null;
+    }
 
     public function execute(SubscribeRequest $request): Subscription
     {
-        $plan = $this->planRepository->findById($request->planId)
+        $operation = fn (): Subscription => $this->doExecute($request);
+
+        return $this->transactionManager instanceof \Closure
+            ? ($this->transactionManager)($operation)
+            : $operation();
+    }
+
+    private function doExecute(SubscribeRequest $request): Subscription
+    {
+        $plan = $this->planRepository->findById($request->planId, lock: true)
             ?? throw PlanNotFoundException::withId($request->planId);
 
         if (! $plan->isActive) {

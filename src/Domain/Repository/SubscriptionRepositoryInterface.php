@@ -11,7 +11,11 @@ interface SubscriptionRepositoryInterface
 {
     public function save(Subscription $subscription): void;
 
-    public function findById(string $id): ?Subscription;
+    /**
+     * @param  bool  $lock  If true, the PDO implementation issues `SELECT ... FOR UPDATE`
+     *                      (must be called inside a transaction). Ignored by in-memory adapters.
+     */
+    public function findById(string $id, bool $lock = false): ?Subscription;
 
     /** @return Subscription[] */
     public function findByUser(string $userId, ?string $storeId = null): array;

@@ -19,7 +19,7 @@ class MemorySubscriptionRepository implements SubscriptionRepositoryInterface
         $this->subscriptions[$subscription->id] = $subscription;
     }
 
-    public function findById(string $id): ?Subscription
+    public function findById(string $id, bool $lock = false): ?Subscription
     {
         return $this->subscriptions[$id] ?? null;
     }

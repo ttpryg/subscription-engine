@@ -26,6 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker development tooling: `docker-compose.yml` and `.docker/php/Dockerfile` now
   provide a single PHP 8.1 CLI container for running `composer test`, `composer analyse`,
   and `composer fix` without a local PHP install. Documented in the README.
+- Transaction management for billing mutations: `TransactionManagerInterface`
+  (`Domain\Service`) and `PdoTransactionManager` (`Infrastructure\Database`) ensure
+  atomic write operations across all write use cases (`subscribe`, `changePlan`,
+  `recordPayment`, `recordPaymentFailure`, `cancel`, `pause`, `resume`, `undoCancellation`,
+  `createPlan`). `SubscriptionService` injects a PDO-backed default transaction manager
+  when a PDO connection is available.
+- Row locking for concurrent-safe writes: `findById($id, lock: true)` added to
+  `SubscriptionRepositoryInterface` and `PlanRepositoryInterface`; PDO implementations
+  issue `SELECT ... FOR UPDATE`, in-memory adapters ignore the flag. All mutating use
+  cases lock the aggregate root before modifying it.
 
 ### Changed
 

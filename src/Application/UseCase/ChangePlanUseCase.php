@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ttpryg\SubscriptionEngine\Application\UseCase;
 
+use Closure;
 use DomainException;
 use Psr\Clock\ClockInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -20,25 +21,39 @@ use Ttpryg\SubscriptionEngine\Domain\Service\ProrationCalculator;
 
 final class ChangePlanUseCase
 {
+    private readonly ?Closure $transactionManager;
+
     public function __construct(
         private readonly PlanRepositoryInterface $planRepository,
         private readonly SubscriptionRepositoryInterface $subscriptionRepository,
         private readonly InvoiceService $invoiceService,
         private readonly ProrationCalculator $prorationCalculator,
         private readonly ClockInterface $clock,
-        private readonly ?EventDispatcherInterface $eventDispatcher = null
-    ) {}
+        private readonly ?EventDispatcherInterface $eventDispatcher = null,
+        ?callable $transactionManager = null
+    ) {
+        $this->transactionManager = $transactionManager !== null ? Closure::fromCallable($transactionManager) : null;
+    }
 
     public function execute(ChangePlanRequest $request): Subscription
     {
-        $plan = $this->planRepository->findById($request->newPlanId)
+        $operation = fn (): Subscription => $this->doExecute($request);
+
+        return $this->transactionManager instanceof \Closure
+            ? ($this->transactionManager)($operation)
+            : $operation();
+    }
+
+    private function doExecute(ChangePlanRequest $request): Subscription
+    {
+        $plan = $this->planRepository->findById($request->newPlanId, lock: true)
             ?? throw PlanNotFoundException::withId($request->newPlanId);
 
         if (! $plan->isActive) {
             throw new DomainException(sprintf('Plan "%s" is not accepting new subscriptions', $plan->id));
         }
 
-        $subscription = $this->subscriptionRepository->findById($request->subscriptionId)
+        $subscription = $this->subscriptionRepository->findById($request->subscriptionId, lock: true)
             ?? throw SubscriptionNotFoundException::withId($request->subscriptionId);
 
         $fromPlanId = $subscription->planId;
@@ -52,7 +67,7 @@ final class ChangePlanUseCase
             return $subscription;
         }
 
-        $oldPlan = $this->planRepository->findById($fromPlanId)
+        $oldPlan = $this->planRepository->findById($fromPlanId, lock: true)
             ?? throw PlanNotFoundException::withId($fromPlanId);
 
         $subscription->applyPlan($plan->id, $now);
